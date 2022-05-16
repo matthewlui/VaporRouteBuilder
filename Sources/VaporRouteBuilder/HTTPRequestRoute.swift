@@ -4,6 +4,37 @@
 
 import Vapor
 
+public struct On<T: AsyncResponseEncodable>: RouteBuildable {
+
+    typealias Result = T
+
+    public var route: BuildableRoute
+
+    public init(
+        _ method: HTTPMethod,
+        _ path: [PathComponent],
+        body: HTTPBodyStreamStrategy = .collect,
+        handler: @escaping (Request) async throws -> T
+    ) {
+        route = { builder in
+            let responder = AsyncBasicResponder { request in
+                if case .collect(let max) = body, request.body.data == nil {
+                    _ = try await request.body.collect(max: max?.value ?? request.application.routes.defaultMaxBodySize.value).get()
+                }
+                return try await closure(request).encodeResponse(for: request)
+            }
+            let route = Route(
+                method: method,
+                path: path,
+                responder: responder,
+                requestType: Request.self,
+                responseType: Response.self
+            )
+            builder.add(route)
+        }
+    }
+}
+
 public struct Get<T: AsyncResponseEncodable>: RouteBuildable {
 
     typealias Result = T
