@@ -5,11 +5,11 @@
 import Vapor
 
 public protocol RouteCollectionBuild: RouteCollection {
-    @RouteBuilder var routes: [BuildableRoute] { get }
+    @RouteBuilder var routes: [RouteCollection] { get }
 }
 
 public extension RouteCollectionBuild {
     public func boot(routes: RoutesBuilder) throws {
-        self.routes.forEach { $0(routes) }
+        try self.routes.forEach { try $0.boot(routes: routes) }
     }
 }

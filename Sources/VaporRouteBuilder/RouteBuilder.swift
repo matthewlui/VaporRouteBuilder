@@ -4,11 +4,11 @@
 
 import Vapor
 
-public typealias BuildableRoute = (RoutesBuilder) -> Void
+public typealias BuildableRoute = (RoutesBuilder) throws -> Void
 
 @resultBuilder
 public struct RouteBuilder {
-    public static func buildBlock(_ components: RouteBuildable...) -> [BuildableRoute] {
-        components.map(\.route)
+    public static func buildBlock(_ components: RouteCollection...) -> [RouteCollection] {
+        components
     }
 }

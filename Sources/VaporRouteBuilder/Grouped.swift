@@ -4,21 +4,32 @@
 
 import Vapor
 
-public struct Grouped: RouteBuildable {
+public struct Grouped: RouteCollection {
 
     public var route: BuildableRoute
 
-    public init(middleware: [Middleware], @RouteBuilder routesBuilder: @escaping () -> [BuildableRoute]) {
+    public init(middleware: [Middleware], @RouteBuilder routesBuilder: @escaping () throws -> [RouteCollection]) {
         route = { builder in
             let grouped = builder.grouped(middleware)
-            _ = routesBuilder().map({ $0(grouped) })
+            _ = try routesBuilder().map { try $0.boot(routes: grouped) }
         }
     }
 
-    public init(_ path: PathComponent..., @RouteBuilder routesBuilder: @escaping () -> [BuildableRoute]) {
+    public init(middleware: Middleware..., @RouteBuilder routesBuilder: @escaping () throws -> [RouteCollection]) {
+        route = { builder in
+            let grouped = builder.grouped(middleware)
+            _ = try routesBuilder().map { try $0.boot(routes: grouped) }
+        }
+    }
+
+    public init(_ path: PathComponent..., @RouteBuilder routesBuilder: @escaping () throws -> [RouteCollection]) {
         route = { builder in
             let grouped = builder.grouped(path)
-            _ = routesBuilder().map { $0(grouped) }
+            _ = try routesBuilder().map { try $0.boot(routes: grouped) }
         }
+    }
+
+    public func boot(routes: RoutesBuilder) throws {
+        try self.route(routes)
     }
 }
